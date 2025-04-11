@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "SpaceWH AI Assistant",
+  "version": "1.0.0",
+  "description": "AI-powered sidebar assistant for workspace collaboration",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "http://localhost:3101/*",
+    "ws://localhost:3101/*"
+  ],
+  "background": {
+    "service_worker": "js/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "js/content.js"
+      ],
+      "css": [
+        "css/sidebar.css"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "sidebar.html",
+        "css/*",
+        "icons/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; connect-src 'self' http://localhost:3101 ws://localhost:3101; style-src 'self' 'unsafe-inline'"
+  },
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3101/*"
+    ]
+  },
+  "minimum_chrome_version": "88.0"
+}

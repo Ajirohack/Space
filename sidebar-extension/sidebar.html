@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpaceWH AI Assistant</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #f5f5f5;
+        }
+
+        .sidebar-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            background-color: #000;
+            color: white;
+            padding: 12px 16px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .connection-status {
+            position: absolute;
+            top: 12px;
+            right: 50px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .connection-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+            background-color: #9ca3af;
+        }
+
+        .connection-status.connected::before {
+            background-color: #10b981;
+        }
+
+        .connection-status.disconnected::before {
+            background-color: #ef4444;
+        }
+
+        .connection-status.connecting::before,
+        .connection-status.reconnecting::before {
+            background-color: #f59e0b;
+            animation: pulse 1.5s infinite;
+        }
+
+        .connection-status.failed::before {
+            background-color: #ef4444;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .message-container {
+            margin-bottom: 16px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background-color: #000;
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            background-color: #e9e9e9;
+            color: #333;
+        }
+
+        .input-container {
+            border-top: 1px solid #ddd;
+            padding: 12px;
+            display: flex;
+            background-color: white;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        .send-button {
+            background-color: #000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+
+        .send-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .auth-notice {
+            padding: 12px;
+            text-align: center;
+            background-color: #ffeaa7;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .user-info {
+            font-size: 14px;
+            color: #ddd;
+            margin-left: 12px;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .loading span {
+            display: inline-block;
+        }
+
+        .loading span:after {
+            content: '...';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+
+            0%,
+            20% {
+                content: '.';
+            }
+
+            40% {
+                content: '..';
+            }
+
+            60%,
+            100% {
+                content: '...';
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar-container">
+        <div class="sidebar-header">
+            <span>SpaceWH AI Assistant</span>
+            <span class="user-info" id="user-name"></span>
+            <div id="connection-status" class="connection-status disconnected">Disconnected</div>
+            <button class="close-button" id="close-button">&times;</button>
+        </div>
+        <div class="sidebar-content" id="messages">
+            <div class="message-container">
+                <div class="message assistant">
+                    Welcome to SpaceWH AI Assistant. How can I help you today?
+                </div>
+            </div>
+        </div>
+        <div class="input-container">
+            <input type="text" class="input-field" id="input-field" placeholder="Type a message...">
+            <button class="send-button" id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+</body>
+
+</html>

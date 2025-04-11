@@ -1,0 +1,109 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/backend"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/backend/agent"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/backend/mis-api"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/backend/mis-api/__pycache__"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/backend/mis-api/logs"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/backend/mis-api/tests"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/backend/mis-api/utils"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/backend/mis-api/venv"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/frontend"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/mcp-servers"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/shared"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/shared/components"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/shared/sidebar"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/icons"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/js"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/js/__tests__"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/.bin"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/@types"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/csstype"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/js-tokens"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/loose-envify"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/react"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/react-dom"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/react-dom/cjs"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/react-dom/umd"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/scheduler"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/typescript"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/typescript/bin"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/typescript/lib"
+		},
+		{
+			"path": "../../../../Documents/Cline/MCP/spacewh-ai-platform/sidebar-extension/node_modules/undici-types"
+		}
+	]
+}

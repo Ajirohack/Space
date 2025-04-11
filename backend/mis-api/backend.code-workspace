@@ -1,0 +1,44 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../frontend"
+		},
+		{
+			"path": "../../frontend/dashboard"
+		},
+		{
+			"path": "../../frontend/dashboard/.pytest_cache"
+		},
+		{
+			"path": "../../frontend/dashboard/node_modules"
+		},
+		{
+			"path": "../../frontend/dashboard/public"
+		},
+		{
+			"path": "../../frontend/dashboard/src"
+		},
+		{
+			"path": "../../frontend/sidebar"
+		},
+		{
+			"path": "../../frontend/src"
+		},
+		{
+			"path": "../../mcp-servers"
+		},
+		{
+			"path": "../../my-react-app"
+		},
+		{
+			"path": "../../shared"
+		},
+		{
+			"path": "../../sidebar-extension"
+		}
+	],
+	"settings": {}
+}

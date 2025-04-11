@@ -1,0 +1,128 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../../backend"
+		},
+		{
+			"path": "../../../../../../backend/mis-api"
+		},
+		{
+			"path": "../../../../../../backend/agent"
+		},
+		{
+			"path": "../../../../../../backend/mis-api/__pycache__"
+		},
+		{
+			"path": "../../../../../../backend/mis-api/logs"
+		},
+		{
+			"path": "../../../../../../backend/mis-api/tests"
+		},
+		{
+			"path": "../../../../../../backend/mis-api/utils"
+		},
+		{
+			"path": "../../../../../../backend/mis-api/venv"
+		},
+		{
+			"path": "../../../../.."
+		},
+		{
+			"path": "../../../.."
+		},
+		{
+			"path": "../../../../.pytest_cache"
+		},
+		{
+			"path": "../../../../node_modules"
+		},
+		{
+			"path": "../../../../public"
+		},
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../../../sidebar"
+		},
+		{
+			"path": "../../../../../src"
+		},
+		{
+			"path": "../../../../../../mcp-servers"
+		},
+		{
+			"path": "../../../../../../shared"
+		},
+		{
+			"path": "../../../../../../shared/components/ui"
+		},
+		{
+			"path": "../../../../../../shared/sidebar"
+		},
+		{
+			"path": "../../../../../../shared/sidebar/__tests__"
+		},
+		{
+			"path": "../../../../../../sidebar-extension"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/css"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/icons"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/js"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/js/__tests__"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/.bin"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/@types"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/csstype"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/js-tokens"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/loose-envify"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/react"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/react/cjs"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/react/umd"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/react-dom"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/react-dom/cjs"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/react-dom/umd"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/scheduler"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/typescript"
+		},
+		{
+			"path": "../../../../../../sidebar-extension/node_modules/undici-types"
+		}
+	],
+	"settings": {}
+}
