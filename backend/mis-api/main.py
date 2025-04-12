@@ -7,12 +7,15 @@ import secrets
 from typing import Optional, Dict, Set, List
 from datetime import datetime
 from dotenv import load_dotenv
-from pydantic import AnyHttpUrl, SecretStr, validator, conint
+from pydantic import AnyHttpUrl, SecretStr, validator, Field
 from pydantic_settings import BaseSettings
 import weakref
 import json
 import asyncio
 import uuid
+import random
+import string
+import httpx
 from utils.logging import setup_logging
 
 # Initialize logging
@@ -22,7 +25,7 @@ logger = logging.getLogger("api")
 class Settings(BaseSettings):
     # API Configuration
     API_HOST: str = "0.0.0.0"
-    API_PORT: conint(gt=0, lt=65536) = 3000
+    API_PORT: int = Field(default=3000, gt=0, lt=65536)
     DEBUG: bool = False
     
     # Security
@@ -39,7 +42,7 @@ class Settings(BaseSettings):
     
     # Email Configuration
     SMTP_HOST: str
-    SMTP_PORT: conint(gt=0, lt=65536) = 587
+    SMTP_PORT: int = Field(default=587, gt=0, lt=65536)
     SMTP_USER: str
     SMTP_PASS: SecretStr
     
@@ -50,21 +53,21 @@ class Settings(BaseSettings):
     OPERATOR_TOKEN: SecretStr
     
     # Rate limiting
-    RATE_LIMIT_REQUESTS_PER_MINUTE: conint(gt=0) = 100
-    RATE_LIMIT_BURST: conint(gt=0) = 20
-    RATE_LIMIT_WINDOW: conint(gt=0) = 60
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = Field(default=100, gt=0)
+    RATE_LIMIT_BURST: int = Field(default=20, gt=0)
+    RATE_LIMIT_WINDOW: int = Field(default=60, gt=0)
     
     # WebSocket settings
-    WS_MAX_CONNECTIONS: conint(gt=0) = 1000
-    WS_PING_INTERVAL: conint(gt=0) = 30
+    WS_MAX_CONNECTIONS: int = Field(default=1000, gt=0)
+    WS_PING_INTERVAL: int = Field(default=30, gt=0)
     
     # Cache settings
-    CACHE_TTL: conint(gt=0) = 300
-    CACHE_MAX_ITEMS: conint(gt=0) = 1000
+    CACHE_TTL: int = Field(default=300, gt=0)
+    CACHE_MAX_ITEMS: int = Field(default=1000, gt=0)
 
     # HTTP Client settings
-    HTTP_POOL_MAX_SIZE: conint(gt=0) = 100
-    HTTP_KEEPALIVE_EXPIRY: conint(gt=0) = 300
+    HTTP_POOL_MAX_SIZE: int = Field(default=100, gt=0)
+    HTTP_KEEPALIVE_EXPIRY: int = Field(default=300, gt=0)
     
     @validator('ADMIN_USERNAME')
     def username_must_be_valid(cls, v):
@@ -244,128 +247,107 @@ async def health_check():
             }
         )
 
+# Add safe_post_to_supabase and safe_get_from_supabase functions for error handling
+async def safe_post_to_supabase(endpoint: str, data: dict):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.SUPABASE_URL}/{endpoint}",
+                headers={
+                    "apikey": settings.SUPABASE_KEY.get_secret_value(),
+                    "Authorization": f"Bearer {settings.SUPABASE_KEY.get_secret_value()}",
+                    "Content-Type": "application/json"
+                },
+                json=data
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPError as exc:
+        logger.error(f"Supabase POST error: {str(exc)}")
+        raise HTTPException(status_code=500, detail=f"Supabase error: {str(exc)}")
+
+async def safe_get_from_supabase(endpoint: str, params: dict):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.SUPABASE_URL}/{endpoint}",
+                headers={
+                    "apikey": settings.SUPABASE_KEY.get_secret_value(),
+                    "Authorization": f"Bearer {settings.SUPABASE_KEY.get_secret_value()}"
+                },
+                params=params
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPError as exc:
+        logger.error(f"Supabase GET error: {str(exc)}")
+        raise HTTPException(status_code=500, detail=f"Supabase error: {str(exc)}")
+
 @app.post("/admin/create-invitation", response_model=InvitationResponse)
 async def create_invitation(request: InvitationRequest, admin_user: str = Depends(verify_admin)):
-    """Create a new invitation code and PIN (Admin only)"""
     logger.info(f"Admin '{admin_user}' creating invitation for {request.invited_name}")
-    try:
-        invitation = await supabase.create_invitation(request.invited_name)
-        logger.info(f"Invitation created: {invitation['code']}")
-        return invitation
-    except Exception as e:
-        logger.error(f"Error creating invitation: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to create invitation: {str(e)}")
+    code = ''.join(random.choices(string.ascii_letters + string.digits, k=18))
+    pin = ''.join(random.choices(string.digits, k=4))
+    data = {
+        "code": code,
+        "pin": pin,
+        "invited_name": request.invited_name,
+        "status": "pending"
+    }
+    await safe_post_to_supabase("rest/v1/invitations", data)
+    return {"code": code, "pin": pin, "invited_name": request.invited_name}
 
 @app.post("/validate-invitation", response_model=ValidateInvitationResponse)
 async def validate_invitation(request: ValidateInvitationRequest):
-    """Validate invitation code and PIN"""
     logger.info(f"Validating invitation code: {request.code}")
-    try:
-        invitation = await supabase.get_invitation(request.code, request.pin)
-        if invitation:
-            logger.info(f"Invitation validated: {request.code}")
-            return {
-                "valid": True,
-                "invitation": {
-                    "code": invitation["code"],
-                    "invited_name": invitation["invited_name"]
-                }
-            }
-        else:
-            logger.warning(f"Invalid invitation attempt: {request.code}")
-            return {"valid": False}
-    except Exception as e:
-        logger.error(f"Error validating invitation: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to validate invitation: {str(e)}")
+    params = {
+        "code": f"eq.{request.code}",
+        "pin": f"eq.{request.pin}",
+        "status": "eq.pending"
+    }
+    results = await safe_get_from_supabase("rest/v1/invitations", params)
+    if not results:
+        raise HTTPException(status_code=404, detail="Invalid or expired invitation")
+    return {"valid": True, "code": request.code}
 
 @app.post("/submit-onboarding", response_model=OnboardingResponse)
 async def submit_onboarding(request: OnboardingRequest):
-    """Submit user onboarding information"""
     logger.info(f"Submitting onboarding for code: {request.code}")
-    try:
-        success = await supabase.submit_onboarding(
-            request.code,
-            request.voice_consent,
-            request.responses
-        )
-        
-        if success:
-            logger.info(f"Onboarding submitted successfully for {request.code}")
-            return {
-                "success": True,
-                "message": "Onboarding submitted successfully"
-            }
-        else:
-            logger.warning(f"Onboarding submission failed for {request.code}")
-            return {
-                "success": False,
-                "message": "Failed to submit onboarding. Invalid invitation code."
-            }
-    except Exception as e:
-        logger.error(f"Error submitting onboarding: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to submit onboarding: {str(e)}")
+    invitation = await safe_get_from_supabase("rest/v1/invitations", {"code": f"eq.{request.code}"})
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    onboarding_data = {
+        "invitation_code": request.code,
+        "voice_consent": request.voice_consent,
+        "responses": request.responses
+    }
+    await safe_post_to_supabase("rest/v1/onboarding", onboarding_data)
+    return {"status": "submitted", "code": request.code}
 
 @app.post("/admin/approve-membership", response_model=ApproveMembershipResponse)
 async def approve_membership(request: ApproveMembershipRequest, admin_user: str = Depends(verify_admin)):
-    """Approve a membership application (Admin only)"""
     logger.info(f"Admin '{admin_user}' approving membership for code: {request.invitation_code}")
-    try:
-        membership_key = await supabase.approve_membership(request.invitation_code)
-        if membership_key:
-            logger.info(f"Membership approved for {request.invitation_code}")
-            return {
-                "success": True,
-                "message": "Membership approved",
-                "membership_key": membership_key
-            }
-        else:
-            logger.warning(f"Membership approval failed for {request.invitation_code}")
-            invitation = await supabase.get_invitation(request.invitation_code)
-            reason = "Invalid invitation code or status not 'used'."
-            if invitation and invitation.get("status") == "approved":
-                reason = "Membership already approved for this invitation."
-            elif invitation and invitation.get("status") == "pending":
-                reason = "Onboarding not yet submitted for this invitation."
-
-            return {
-                "success": False,
-                "message": f"Failed to approve membership. {reason}"
-            }
-    except Exception as e:
-        logger.error(f"Error approving membership: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to approve membership: {str(e)}")
+    membership_code = ''.join(random.choices(string.ascii_uppercase, k=10))
+    data = {
+        "invitation_code": request.invitation_code,
+        "user_name": request.user_name,
+        "membership_code": membership_code,
+        "status": "active"
+    }
+    await safe_post_to_supabase("rest/v1/memberships", data)
+    return {"membership_code": membership_code, "user_name": request.user_name}
 
 @app.post("/validate-key", response_model=ValidateKeyResponse)
 async def validate_key(request: ValidateKeyRequest):
-    """Validate a membership key"""
     logger.info("Validating membership key")
-    try:
-        user_data = await supabase.validate_key(request.key)
-        if user_data and user_data.get("valid"):
-            logger.info("Membership key validated successfully")
-            return ValidateKeyResponse(
-                valid=True,
-                user_name=user_data["user_name"]
-            )
-        else:
-            logger.warning(f"Invalid or inactive membership key provided: {request.key[:4]}...")
-            reason = user_data.get("reason", "Invalid or inactive key.") if user_data else "Invalid key."
-            return ValidateKeyResponse(
-                valid=False,
-                user_name=None,
-                error=reason
-            )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        logger.error(f"Error validating key: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "message": "Failed to validate key due to an internal error.",
-                "error": str(e)
-            }
-        )
+    params = {
+        "membership_code": f"eq.{request.key}",
+        "status": "eq.active"
+    }
+    results = await safe_get_from_supabase("rest/v1/memberships", params)
+    if not results:
+        raise HTTPException(status_code=404, detail="Invalid membership key")
+    return {"valid": True, "key": request.key}
 
 @app.post("/gpt-chat", response_model=ChatResponse)
 async def gpt_chat(

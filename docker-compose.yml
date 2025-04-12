@@ -12,10 +12,19 @@ services:
     environment:
       - PYTHONPATH=/app
       - SUPABASE_URL=${SUPABASE_URL:-http://localhost:8000}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-      - JWT_SECRET=${JWT_SECRET}
-      - ADMIN_USERNAME=${ADMIN_USERNAME}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SUPABASE_KEY=${SUPABASE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dev-key-for-testing}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dev-service-key-for-testing}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters-long}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-StrongPassword123!}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - SMTP_HOST=${SMTP_HOST:-localhost}
+      - SMTP_PORT=${SMTP_PORT:-2525}
+      - SMTP_USER=${SMTP_USER:-test}
+      - SMTP_PASS=${SMTP_PASS:-test}
+      - SITE_URL=${SITE_URL:-http://localhost:3101}
+      - OPERATOR_TOKEN=${OPERATOR_TOKEN:-dev-operator-token}
+      - DEBUG=true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]

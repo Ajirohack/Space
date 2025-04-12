@@ -13,21 +13,21 @@ from utils.logging import log_api_request
 class SecurityMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
-        self.csp_directives = {
-            'default-src': ["'self'"],
-            'script-src': ["'self'", "'unsafe-inline'"],  # Consider removing unsafe-inline in production
-            'style-src': ["'self'", "'unsafe-inline'"],
-            'img-src': ["'self'", 'data:', 'https:'],
-            'font-src': ["'self'"],
-            'connect-src': ["'self'"],
-            'frame-ancestors': ["'none'"],
-            'form-action': ["'self'"],
-            'base-uri': ["'self'"],
-            'object-src': ["'none'"]
-        }
-
+        
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
+        
+        # Set individual CSP directives with proper permissions for documentation
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https://fastapi.tiangolo.com https://cdn.jsdelivr.net; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "connect-src 'self' ws: wss:; "
+            "frame-ancestors 'self'; "
+            "object-src 'none';"
+        )
         
         # Security headers
         response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -35,13 +35,6 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         response.headers['X-XSS-Protection'] = '1; mode=block'
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-        
-        # Content Security Policy
-        csp = '; '.join([
-            f"{key} {' '.join(values)}"
-            for key, values in self.csp_directives.items()
-        ])
-        response.headers['Content-Security-Policy'] = csp
         
         # Permissions Policy
         response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'

@@ -359,6 +359,16 @@ function setLoadingState(isLoading) {
     // Optionally change button text/style during loading
 }
 
+// Toggle sidebar visibility
+function toggleSidebar(show) {
+    const sidebar = document.getElementById('spacewh-ai-sidebar');
+    if (show === undefined) {
+        sidebar.classList.toggle('open');
+    } else {
+        sidebar.classList[show ? 'add' : 'remove']('open');
+    }
+}
+
 // Event listeners
 inputField.addEventListener('input', updateAuthUI); // Update send button state on input
 inputField.addEventListener('keydown', (event) => {
@@ -371,6 +381,13 @@ inputField.addEventListener('keydown', (event) => {
 sendButton.addEventListener('click', sendMessage);
 
 closeButton.addEventListener('click', () => {
-    // Send message to content script's window (parent of the iframe)
-    window.parent.postMessage({ type: 'SIDEBAR_CLOSE' }, '*'); // Use '*' for origin or derive dynamically if needed
+    toggleSidebar(false);
+    window.parent.postMessage({ type: 'SIDEBAR_CLOSE' }, '*');
+});
+
+// Listen for toggle messages from the parent window
+window.addEventListener('message', (event) => {
+    if (event.data.type === 'TOGGLE_SIDEBAR') {
+        toggleSidebar(event.data.show);
+    }
 });

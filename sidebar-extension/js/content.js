@@ -245,44 +245,20 @@ function ensureSidebarInjected() {
     // Create sidebar container
     const sidebarContainer = document.createElement('div');
     sidebarContainer.id = 'spacewh-ai-sidebar';
-    sidebarContainer.style.cssText = `
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 320px;
-        height: 100vh;
-        z-index: 9999;
-        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-        background-color: white;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-        overflow: hidden;
-    `;
-    sidebarContainer.style.transform = 'translateX(100%)'; // Start hidden
+
+    // Inject CSS file
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = chrome.runtime.getURL('css/sidebar.css');
+    document.head.appendChild(link);
+
     document.body.appendChild(sidebarContainer);
 
     // Create toggle button
     const toggleButton = document.createElement('button');
     toggleButton.id = 'spacewh-ai-sidebar-toggle';
     toggleButton.innerHTML = '&#128172;'; // Speech bubble emoji
-    toggleButton.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: #000;
-        color: white;
-        font-size: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 10000;
-        border: none;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    `;
     document.body.appendChild(toggleButton);
 
     // Add toggle functionality
@@ -297,11 +273,11 @@ function ensureSidebarInjected() {
 // Function to toggle sidebar visibility
 function toggleSidebar(container, show = !sidebarVisible, prompt = null) {
     sidebarVisible = show;
-    container.style.transform = sidebarVisible ? 'translateX(0)' : 'translateX(100%)';
+    container.classList.toggle('open', show);
+
     if (sidebarVisible && !container.hasAttribute('data-loaded')) {
         loadSidebarContent(container, prompt);
     } else if (sidebarVisible && prompt) {
-        // If sidebar already loaded, send prompt via message
         const iframe = container.querySelector('iframe');
         if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage({ type: 'SHOW_WITH_PROMPT', payload: { prompt } }, '*');

@@ -1,11 +1,12 @@
 fastapi>=0.110.0
 uvicorn[standard]>=0.27.1 # Ensure uvicorn is listed, [standard] includes common extras
-httpx>=0.26.0
+httpx[http2]>=0.26.0  # Added HTTP/2 support
 sqlalchemy>=2.0.27
 aiosqlite>=0.19.0
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 pydantic[email]>=2.6.1
+pydantic_settings>=2.0.0  # Added for BaseSettings support
 pytest>=8.0.0
 mypy>=1.8.0
 black>=24.1.1
