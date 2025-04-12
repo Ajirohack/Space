@@ -94,7 +94,19 @@ def test_security_middleware(app, client):
     assert headers["X-Frame-Options"] == "DENY"
     assert headers["X-XSS-Protection"] == "1; mode=block"
     assert headers["Strict-Transport-Security"] == "max-age=31536000; includeSubDomains"
-    assert headers["Content-Security-Policy"] == "default-src 'self'"
+    
+    # Check Content-Security-Policy
+    csp = headers["Content-Security-Policy"]
+    assert "default-src 'self'" in csp
+    assert "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net" in csp
+    assert "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net" in csp
+    assert "img-src 'self' data: https://fastapi.tiangolo.com https://cdn.jsdelivr.net" in csp
+    assert "font-src 'self' https://fonts.gstatic.com" in csp
+    assert "connect-src 'self' ws: wss:" in csp
+    assert "frame-ancestors 'self'" in csp
+    assert "base-uri 'self'" in csp
+    assert "object-src 'none'" in csp
+    
     assert headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
 
 def test_cache_middleware(app, client):

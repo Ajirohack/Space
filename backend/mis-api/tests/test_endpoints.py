@@ -1,8 +1,18 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, AsyncMock
-from main import app
+import os
 import json
+
+# Set test environment variables
+os.environ['SUPABASE_SERVICE_KEY'] = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.valid-service-key'
+os.environ['SUPABASE_KEY'] = 'sbp_a6838c854cf1a7382a5781f084fc1ea3c316d861'
+os.environ['SUPABASE_URL'] = 'https://test-project.supabase.co'
+os.environ['JWT_SECRET'] = 'test-jwt-secret-that-is-at-least-32-characters'
+os.environ['ADMIN_USERNAME'] = 'test_admin'
+os.environ['ADMIN_PASSWORD'] = 'TestPassword1234!'
+
+from main import app
 
 client = TestClient(app)
 
@@ -165,3 +175,22 @@ class TestMembershipAPI:
         data = response.json()
         assert data["valid"] == False
         assert "error" in data
+
+    def test_redoc_documentation(self):
+        """Test ReDoc documentation endpoint with CSP headers"""
+        response = client.get("/docs")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        
+        # Verify CSP headers
+        csp = response.headers["Content-Security-Policy"]
+        assert "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net" in csp
+        assert "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net" in csp
+        assert "img-src 'self' data: https://fastapi.tiangolo.com https://cdn.jsdelivr.net" in csp
+        assert "font-src 'self' https://fonts.gstatic.com" in csp
+        
+        # Verify ReDoc-specific content
+        content = response.text
+        assert "redoc.standalone.js" in content
+        assert "fonts.googleapis.com" in content
+        assert "cdn.jsdelivr.net" in content

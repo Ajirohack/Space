@@ -20,12 +20,13 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         # Set individual CSP directives with proper permissions for documentation
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
             "img-src 'self' data: https://fastapi.tiangolo.com https://cdn.jsdelivr.net; "
             "font-src 'self' https://fonts.gstatic.com; "
             "connect-src 'self' ws: wss:; "
             "frame-ancestors 'self'; "
+            "base-uri 'self'; "
             "object-src 'none';"
         )
         
@@ -144,7 +145,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-            "Content-Security-Policy": "default-src 'self'",
+            # CSP header removed to avoid conflicts with SecurityMiddleware
             "X-Rate-Limit-Limit": str(self.requests_per_minute),
             "X-Rate-Limit-Remaining": str(self.requests_per_minute - len(self.requests[client_ip])),
             "X-Rate-Limit-Reset": str(int(self.window_size - (current_time - self.requests[client_ip][0][0])))
