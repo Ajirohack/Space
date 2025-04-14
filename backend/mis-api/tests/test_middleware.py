@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.testclient import TestClient
 import pytest
+import json
 from datetime import datetime, timedelta
 import time
 import asyncio
@@ -11,6 +12,7 @@ from middleware import (
     SecurityMiddleware,
     CacheMiddleware
 )
+from httpx import ASGITransport
 
 @pytest.fixture
 def app():
@@ -19,7 +21,7 @@ def app():
 
 @pytest.fixture
 def client(app):
-    return TestClient(app)
+    return TestClient(app, transport=ASGITransport(app=app))
 
 def test_timing_middleware(app, client):
     app.add_middleware(TimingMiddleware)
@@ -110,63 +112,65 @@ def test_security_middleware(app, client):
     assert headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
 
 def test_cache_middleware(app, client):
-    app.add_middleware(CacheMiddleware)
+    app.add_middleware(CacheMiddleware, ttl=5)
     
-    counter = 0
+    request_count = 0
     
     @app.get("/test")
     async def test_endpoint():
-        nonlocal counter
-        counter += 1
-        return {"count": counter}
+        nonlocal request_count
+        request_count += 1
+        return Response(
+            content=json.dumps({"count": request_count}),
+            media_type="application/json"
+        )
     
-    # First request
+    # First request should increment counter
     response1 = client.get("/test")
     assert response1.status_code == 200
-    count1 = response1.json()["count"]
+    assert response1.json()["count"] == 1
     
     # Second request should return cached result
     response2 = client.get("/test")
     assert response2.status_code == 200
-    count2 = response2.json()["count"]
-    
-    # Counts should be equal since second response was cached
-    assert count1 == count2 == 1
+    assert response2.json()["count"] == 1  # Should be cached value
 
 def test_cache_middleware_different_paths(app, client):
-    app.add_middleware(CacheMiddleware)
+    app.add_middleware(CacheMiddleware, ttl=5)
     
-    counter = 0
+    request_count = 0
     
     @app.get("/test1")
     async def test_endpoint1():
-        nonlocal counter
-        counter += 1
-        return {"count": counter}
+        nonlocal request_count
+        request_count += 1
+        return Response(
+            content=json.dumps({"count": request_count}),
+            media_type="application/json"
+        )
         
     @app.get("/test2")
     async def test_endpoint2():
-        nonlocal counter
-        counter += 1
-        return {"count": counter}
+        nonlocal request_count
+        request_count += 1
+        return Response(
+            content=json.dumps({"count": request_count}),
+            media_type="application/json"
+        )
     
     # Test first path
     response1 = client.get("/test1")
     assert response1.status_code == 200
-    count1 = response1.json()["count"]
+    assert response1.json()["count"] == 1
     
     # Test second path
     response2 = client.get("/test2")
     assert response2.status_code == 200
-    count2 = response2.json()["count"]
-    
-    # Different paths should increment counter
-    assert count1 == 1
-    assert count2 == 2
+    assert response2.json()["count"] == 2
     
     # Cached responses should maintain their values
     response3 = client.get("/test1")
-    response4 = client.get("/test2")
+    assert response3.json()["count"] == 1  # From cache
     
-    assert response3.json()["count"] == 1
-    assert response4.json()["count"] == 2
+    response4 = client.get("/test2")
+    assert response4.json()["count"] == 2  # From cache

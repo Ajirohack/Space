@@ -44,3 +44,40 @@
         --ring: 212.7 26.8% 83.9%;
     }
 }
+
+/* Allow body content overflow to be visible */
+body {
+    overflow: visible;
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    position: relative;
+}
+
+/* Main application container (takes all remaining space) */
+#root {
+    flex-grow: 1;
+    flex-basis: auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+/* Sidebar or injected widget container */
+#monica-content-root {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    /* adjust as needed */
+    height: 100%;
+    z-index: 50;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
+}
+
+/* Hide sidebar elements on the invitation page */
+body.invitation-page #spacewh-ai-sidebar,
+body.invitation-page #spacewh-ai-sidebar-toggle {
+    display: none !important;
+}

@@ -1,10 +1,14 @@
 import React from 'react';
+import { useAuth } from '../../AuthContext';
 
 interface SidebarProps {
   className?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
+  const { auth } = useAuth();
+  if (!auth.isAuthenticated) return null;
+
   return (
     <div className={`w-64 h-screen bg-gray-100 p-4 ${className}`}>
       <h2 className="text-xl font-bold mb-4">Dashboard Sidebar</h2>

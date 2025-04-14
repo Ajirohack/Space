@@ -242,6 +242,12 @@ async function checkServiceHealth() {
 function ensureSidebarInjected() {
     if (sidebarInjected || !sidebarEnabled) return;
 
+    // Skip sidebar injection on invitation page
+    if (window.location.pathname.includes('/invitation') ||
+        document.title.toLowerCase().includes('invitation')) {
+        return;
+    }
+
     // Create sidebar container
     const sidebarContainer = document.createElement('div');
     sidebarContainer.id = 'spacewh-ai-sidebar';
@@ -272,6 +278,12 @@ function ensureSidebarInjected() {
 
 // Function to toggle sidebar visibility
 function toggleSidebar(container, show = !sidebarVisible, prompt = null) {
+    // Don't show sidebar on invitation page
+    if (window.location.pathname.includes('/invitation') ||
+        document.title.toLowerCase().includes('invitation')) {
+        return;
+    }
+
     sidebarVisible = show;
     container.classList.toggle('open', show);
 

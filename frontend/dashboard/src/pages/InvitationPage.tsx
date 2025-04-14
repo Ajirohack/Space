@@ -11,6 +11,15 @@ const InvitationPage: React.FC = () => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
+    // Add class to body when component mounts
+    document.body.classList.add('invitation-page');
+    // Remove class when component unmounts
+    return () => {
+      document.body.classList.remove('invitation-page');
+    };
+  }, []);
+
+  useEffect(() => {
     if (showScanner && !scannerRef.current) {
       scannerRef.current = new Html5Qrcode("qr-reader");
       scannerRef.current.start(

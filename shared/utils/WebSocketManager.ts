@@ -1,16 +1,16 @@
 import { EventEmitter } from 'events';
 
-interface WebSocketEvents {
-    message: (data: any) => void;
-    error: (error: Error) => void;
-    statusChange: (status: ConnectionStatus) => void;
-}
-
 type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'reconnecting' | 'failed';
 
 interface WebSocketMessage {
     type: string;
     payload?: any;
+}
+
+interface WebSocketEvents {
+    message: (data: any) => void;
+    error: (error: Error) => void;
+    statusChange: (status: ConnectionStatus) => void;
 }
 
 export class WebSocketManager extends EventEmitter {
@@ -25,7 +25,7 @@ export class WebSocketManager extends EventEmitter {
         super();
     }
 
-    setAuthToken(token: string | null) {
+    setAuthToken(token: string | null): void {
         this.authToken = token;
         if (this.isConnected() && token) {
             this.authenticate();
@@ -40,7 +40,7 @@ export class WebSocketManager extends EventEmitter {
             this.ws = new WebSocket(this.url);
             this.setupEventHandlers();
         } catch (error) {
-            this.handleError(error as Error);
+            this.handleError(error instanceof Error ? error : new Error('Failed to create WebSocket'));
         }
     }
 
@@ -61,7 +61,7 @@ export class WebSocketManager extends EventEmitter {
         };
 
         this.ws.onerror = (event) => {
-            this.handleError(new Error('WebSocket error occurred'));
+            this.handleError(new Error('WebSocket connection error'));
         };
 
         this.ws.onmessage = (event) => {
@@ -70,6 +70,7 @@ export class WebSocketManager extends EventEmitter {
                 this.emit('message', data);
             } catch (error) {
                 console.error('Error parsing WebSocket message:', error);
+                this.handleError(new Error('Invalid message format'));
             }
         };
     }

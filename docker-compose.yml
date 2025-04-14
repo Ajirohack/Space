@@ -39,7 +39,7 @@ services:
       dockerfile: Dockerfile
     image: node:20.11.1-slim
     ports:
-      - "8080:80"
+      - "5173:5173"
     volumes:
       - ./frontend/dashboard:/app
       - ./shared:/shared
@@ -51,8 +51,9 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
+    command: sh -c "npm install && npm run dev"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5173"]
       interval: 30s
       timeout: 3s
       retries: 3

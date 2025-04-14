@@ -4,10 +4,10 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, HTTPBasic
 import os
 import logging
 import secrets
-from typing import Optional, Dict, Set, List
+from typing import Optional, Dict, Set, List, Union
 from datetime import datetime
 from dotenv import load_dotenv
-from pydantic import AnyHttpUrl, SecretStr, validator, Field
+from pydantic import AnyHttpUrl, SecretStr, Field, ConfigDict, field_validator
 from pydantic_settings import BaseSettings
 import weakref
 import json
@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     SMTP_PASS: SecretStr
     
     # Site Configuration
-    SITE_URL: AnyHttpUrl = "http://localhost:3000"
+    SITE_URL: AnyHttpUrl = Field(default="http://localhost:3000")
     
     # Authentication
     OPERATOR_TOKEN: SecretStr
@@ -64,19 +64,21 @@ class Settings(BaseSettings):
     # Cache settings
     CACHE_TTL: int = Field(default=300, gt=0)
     CACHE_MAX_ITEMS: int = Field(default=1000, gt=0)
-
+    
     # HTTP Client settings
     HTTP_POOL_MAX_SIZE: int = Field(default=100, gt=0)
     HTTP_KEEPALIVE_EXPIRY: int = Field(default=300, gt=0)
     
-    @validator('ADMIN_USERNAME')
-    def username_must_be_valid(cls, v):
+    @field_validator('ADMIN_USERNAME')
+    @classmethod
+    def username_must_be_valid(cls, v: str) -> str:
         if len(v) < 3:
             raise ValueError('Admin username must be at least 3 characters')
         return v
     
-    @validator('ADMIN_PASSWORD')
-    def password_must_be_strong(cls, v: SecretStr):
+    @field_validator('ADMIN_PASSWORD')
+    @classmethod
+    def password_must_be_strong(cls, v: SecretStr) -> SecretStr:
         password = v.get_secret_value()
         if len(password) < 12:
             raise ValueError('Admin password must be at least 12 characters')
@@ -88,22 +90,25 @@ class Settings(BaseSettings):
             raise ValueError('Password must contain uppercase, lowercase, digit and special characters')
         return v
     
-    @validator('JWT_SECRET')
-    def jwt_secret_must_be_strong(cls, v: SecretStr):
+    @field_validator('JWT_SECRET')
+    @classmethod
+    def jwt_secret_must_be_strong(cls, v: SecretStr) -> SecretStr:
         secret = v.get_secret_value()
         if len(secret) < 32:
             raise ValueError('JWT secret must be at least 32 characters')
         return v
 
-    @validator('SUPABASE_KEY', 'SUPABASE_SERVICE_KEY')
-    def validate_supabase_keys(cls, v: SecretStr):
+    @field_validator('SUPABASE_KEY', 'SUPABASE_SERVICE_KEY')
+    @classmethod
+    def validate_supabase_keys(cls, v: SecretStr) -> SecretStr:
         key = v.get_secret_value()
         if not key or key == 'your-supabase-key' or key == 'your-supabase-service-key':
             raise ValueError('Invalid Supabase key. Please set actual Supabase keys.')
         return v
     
-    @validator('ALLOWED_ORIGINS')
-    def parse_allowed_origins(cls, v):
+    @field_validator('ALLOWED_ORIGINS')
+    @classmethod
+    def parse_allowed_origins(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, str):
             try:
                 origins = json.loads(v)
@@ -114,9 +119,10 @@ class Settings(BaseSettings):
                 raise ValueError('ALLOWED_ORIGINS must be a valid JSON array of URLs')
         return v
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = ConfigDict(
+        case_sensitive=True,
+        env_file=".env"
+    )
 
 # Initialize settings with validation
 load_dotenv()
@@ -194,7 +200,11 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
         return None
     
     key = credentials.credentials
-    user_data = await supabase.validate_key(key)
+    try:
+        user_data = await supabase.validate_key(key)
+    except Exception as e:
+        logger.error(f"Supabase error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Supabase validation failed")
     if not user_data:
         return None
         

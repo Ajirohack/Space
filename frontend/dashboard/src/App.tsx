@@ -2,7 +2,6 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import Sidebar from './shared/sidebar/Sidebar'
 import { Button } from './shared/components/ui/button'
 import { Input } from './shared/components/ui/input'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -27,7 +26,6 @@ function App() {
   return (
     <ErrorBoundary>
       <ToastContainer position="top-right" />
-      <Sidebar />
       <div className="main-content">
         <div>
           <a href="https://vite.dev" target="_blank" rel="noopener noreferrer">
@@ -37,12 +35,11 @@ function App() {
             <img src={reactLogo} className="logo react" alt="React logo" />
           </a>
         </div>
-        <h1>Vite + React</h1>
+        <h1>SpaceWH AI Platform</h1>
         <div className="card space-y-4">
           <Button onClick={() => setCount((count) => count + 1)}>
             count is {count}
           </Button>
-
           <Input placeholder="Type here..." />
         </div>
       </div>
