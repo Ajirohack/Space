@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, status, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, HTTPBasic, HTTPBasicCredentials
+from fastapi.responses import Response
 import os
 import logging
 import secrets
@@ -191,6 +192,14 @@ app.add_middleware(RateLimitMiddleware, requests_per_minute=settings.RATE_LIMIT_
 # Add caching middleware
 app.add_middleware(CacheMiddleware)
 
+@app.middleware("http")
+async def csp_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Content-Security-Policy"] = (
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; worker-src blob:;"
+    )
+    return response
+
 # Security scheme
 security = HTTPBearer(auto_error=False)
 
@@ -337,15 +346,44 @@ async def submit_onboarding(request: OnboardingRequest):
 @app.post("/admin/approve-membership", response_model=ApproveMembershipResponse)
 async def approve_membership(request: ApproveMembershipRequest, admin_user: str = Depends(verify_admin)):
     logger.info(f"Admin '{admin_user}' approving membership for code: {request.invitation_code}")
-    membership_code = ''.join(random.choices(string.ascii_uppercase, k=10))
-    data = {
+    # 1. Fetch invitation and check onboarding status
+    invitation = await safe_get_from_supabase(
+        "rest/v1/invitations",
+        {"code": f"eq.{request.invitation_code}", "select": "*"}
+    )
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found.")
+    inv = invitation[0]
+    if inv.get("status") != "onboarded":
+        raise HTTPException(status_code=400, detail="Invitation not onboarded yet.")
+    user_name = getattr(request, "user_name", inv.get("invited_name", ""))
+    # 2. Generate secure membership code and key
+    import secrets
+    from datetime import datetime
+    membership_code = f"MEMBER-{secrets.token_hex(3).upper()}"
+    timestamp = int(datetime.utcnow().timestamp())
+    membership_key = f"{membership_code}-{timestamp}"
+    # 3. Insert membership record
+    payload = {
         "invitation_code": request.invitation_code,
-        "user_name": request.user_name,
         "membership_code": membership_code,
-        "status": "active"
+        "membership_key": membership_key,
+        "issued_to": user_name,
+        "active": True,
+        "issued_at": datetime.utcnow().isoformat()
     }
-    await safe_post_to_supabase("rest/v1/memberships", data)
-    return {"membership_code": membership_code, "user_name": request.user_name}
+    insert_result = await safe_post_to_supabase(
+        "rest/v1/memberships",
+        payload
+    )
+    if not insert_result:
+        raise HTTPException(status_code=500, detail="Error saving membership record.")
+    return {
+        "success": True,
+        "message": "Membership approved.",
+        "membership_key": membership_key,
+        "membership_code": membership_code
+    }
 
 @app.post("/validate-key", response_model=ValidateKeyResponse)
 async def validate_key(request: ValidateKeyRequest):
