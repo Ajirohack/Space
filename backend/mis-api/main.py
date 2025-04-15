@@ -345,16 +345,26 @@ async def submit_onboarding(request: OnboardingRequest):
 
 @app.post("/admin/approve-membership", response_model=ApproveMembershipResponse)
 async def approve_membership(request: ApproveMembershipRequest, admin_user: str = Depends(verify_admin)):
-    logger.info(f"Admin '{admin_user}' approving membership for code: {request.invitation_code}")
+    logger.info(f"[APPROVE] Admin '{admin_user}' attempting approval for invitation_code={request.invitation_code}, user_name={getattr(request, 'user_name', None)}")
+    # 0. Replay prevention: check if membership already exists for this invitation_code
+    existing_membership = await safe_get_from_supabase(
+        "rest/v1/memberships",
+        {"invitation_code": f"eq.{request.invitation_code}", "active": "eq.true"}
+    )
+    if existing_membership:
+        logger.warning(f"[REPLAY BLOCK] Membership already exists for invitation_code={request.invitation_code}")
+        raise HTTPException(status_code=409, detail="Membership already exists for this invitation code.")
     # 1. Fetch invitation and check onboarding status
     invitation = await safe_get_from_supabase(
         "rest/v1/invitations",
         {"code": f"eq.{request.invitation_code}", "select": "*"}
     )
     if not invitation:
+        logger.error(f"[NOT FOUND] Invitation not found for invitation_code={request.invitation_code}")
         raise HTTPException(status_code=404, detail="Invitation not found.")
     inv = invitation[0]
     if inv.get("status") != "onboarded":
+        logger.warning(f"[NOT ONBOARDED] Invitation_code={request.invitation_code} status={inv.get('status')}")
         raise HTTPException(status_code=400, detail="Invitation not onboarded yet.")
     user_name = getattr(request, "user_name", inv.get("invited_name", ""))
     # 2. Generate secure membership code and key
@@ -363,6 +373,7 @@ async def approve_membership(request: ApproveMembershipRequest, admin_user: str 
     membership_code = f"MEMBER-{secrets.token_hex(3).upper()}"
     timestamp = int(datetime.utcnow().timestamp())
     membership_key = f"{membership_code}-{timestamp}"
+    logger.info(f"[KEY GEN] Issuing membership_key={membership_key} for invitation_code={request.invitation_code}, user_name={user_name}")
     # 3. Insert membership record
     payload = {
         "invitation_code": request.invitation_code,
@@ -377,7 +388,9 @@ async def approve_membership(request: ApproveMembershipRequest, admin_user: str 
         payload
     )
     if not insert_result:
+        logger.error(f"[DB ERROR] Failed to save membership for invitation_code={request.invitation_code}, user_name={user_name}")
         raise HTTPException(status_code=500, detail="Error saving membership record.")
+    logger.info(f"[APPROVED] Membership approved for invitation_code={request.invitation_code}, user_name={user_name}")
     return {
         "success": True,
         "message": "Membership approved.",

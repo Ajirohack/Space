@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.9"
 
 services:
   backend:
@@ -6,24 +6,20 @@ services:
       context: ./backend/mis-api
       dockerfile: Dockerfile
     ports:
-      - "3101:3000"
+      - "3000:3000"
     volumes:
       - ./backend/mis-api:/app
     environment:
       - PYTHONPATH=/app
-      - SUPABASE_URL=${SUPABASE_URL:-http://localhost:8000}
-      - SUPABASE_KEY=${SUPABASE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dev-key-for-testing}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dev-service-key-for-testing}
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters-long}
-      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-StrongPassword123!}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - SMTP_HOST=${SMTP_HOST:-localhost}
-      - SMTP_PORT=${SMTP_PORT:-2525}
-      - SMTP_USER=${SMTP_USER:-test}
-      - SMTP_PASS=${SMTP_PASS:-test}
-      - SITE_URL=${SITE_URL:-http://localhost:3101}
-      - OPERATOR_TOKEN=${OPERATOR_TOKEN:-dev-operator-token}
+      - SUPABASE_URL=http://localhost:3001
+      - SUPABASE_KEY=anon
+      - SUPABASE_SERVICE_KEY=anon
+      - JWT_SECRET=development_jwt_secret_key_at_least_32_chars_long
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=StrongAdminPass123!
+      - POSTGRES_PASSWORD=supa_password
+      - SITE_URL=http://localhost:5173
+      - OPERATOR_TOKEN=development_operator_token
       - DEBUG=true
     restart: unless-stopped
     healthcheck:
@@ -37,7 +33,6 @@ services:
     build:
       context: ./frontend/dashboard
       dockerfile: Dockerfile
-    image: node:20.11.1-slim
     ports:
       - "5173:5173"
     volumes:
@@ -45,7 +40,7 @@ services:
       - ./shared:/shared
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:3101
+      - VITE_API_URL=http://localhost:3000
       - VITE_ENV=development
     depends_on:
       backend:
@@ -69,11 +64,36 @@ services:
       - /app/node_modules
     command: sh -c "npm install && npm run dev"
     environment:
-      - VITE_API_URL=http://localhost:3101
+      - VITE_API_URL=http://localhost:3000
       - NODE_ENV=development
     depends_on:
       backend:
         condition: service_healthy
-      
+
+  supabase-db:
+    image: supabase/postgres:15.1.0.90
+    container_name: supabase-db
+    ports:
+      - "5434:5432"  # Changed host port to 5434 to avoid conflict
+    environment:
+      POSTGRES_PASSWORD: supa_password
+      POSTGRES_DB: postgres
+    volumes:
+      - supabase-db:/var/lib/postgresql/data
+      - ./init_schema.sql:/docker-entrypoint-initdb.d/init_schema.sql
+
+  supabase-rest:
+    image: postgrest/postgrest
+    container_name: supabase-rest
+    depends_on:
+      - supabase-db
+    ports:
+      - "3001:3000"
+    environment:
+      PGRST_DB_URI: postgres://postgres:supa_password@supabase-db:5432/postgres
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: supersecretjwt
+
 volumes:
+  supabase-db: {}
   ollama_data:

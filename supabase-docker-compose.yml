@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.9"
 
 services:
   kong:
@@ -93,5 +93,29 @@ services:
     ports:
       - "9999:9999"
 
+  supabase-db:
+    image: supabase/postgres:15.1.0.90
+    container_name: supabase-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: supa_password
+      POSTGRES_DB: postgres
+    volumes:
+      - supabase-db:/var/lib/postgresql/data
+
+  supabase-rest:
+    image: postgrest/postgrest
+    container_name: supabase-rest
+    depends_on:
+      - supabase-db
+    ports:
+      - "3001:3000"
+    environment:
+      PGRST_DB_URI: postgres://postgres:supa_password@supabase-db:5432/postgres
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: supersecretjwt
+
 volumes:
   supabase_db_data:
+  supabase-db:

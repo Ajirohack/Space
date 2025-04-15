@@ -9,6 +9,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from main import app
 
+# Update the base URL for tests to point to the correct backend URL
+BASE_URL = "http://localhost:3000"
+
 @pytest.fixture
 def client():
     return TestClient(app)

@@ -1,27 +1,17 @@
-# Build stage
-FROM node:20-slim AS builder
+# Use an official Node.js image
+FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-
+# Install dependencies
+COPY package.json package-lock.json* ./
 RUN npm install
 
+# Copy the rest of the app
 COPY . .
 
-WORKDIR /app
+# Expose the Vite dev server port
+EXPOSE 5173
 
-RUN npm run build
-
-# Production stage
-FROM nginx:alpine
-
-WORKDIR /usr/share/nginx/html
-
-RUN rm -rf ./*
-
-COPY --from=builder /app/dist .
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Start the Vite dev server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
